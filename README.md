@@ -1,27 +1,69 @@
 # SIMTELE-RISK
 
-Laboratorio académico inspirado en el transporte por cable de La Paz. Los escenarios y datos son hipotéticos y no representan fallas, límites ni recomendaciones operativas de Mi Teleférico.
+Laboratorio académico de métodos numéricos inspirado en el transporte por cable de La Paz y El Alto. Los modelos, mediciones y escenarios son sintéticos: no describen fallas reales ni establecen recomendaciones de mantenimiento para Mi Teleférico.
 
-## Inicio
+- **Aplicación:** [itzmanix.github.io/teleferico](https://itzmanix.github.io/teleferico/)
+- **Informe de la semana 1:** [informe.md](informe.md)
+- **Repositorio:** [github.com/iTzManix/teleferico](https://github.com/iTzManix/teleferico)
 
-Sirve esta carpeta por HTTP, por ejemplo `python -m http.server 8000`, y abre http://localhost:8000. La aplicación usa JavaScript nativo, Google Fonts y el cliente público de Supabase desde CDN. Ejecuta las pruebas con `npm test` (Node.js).
+## Casos de estudio
 
-## Alcance
+| Módulo | Problema | Estado |
+|---|---|---|
+| Detención de emergencia | Tiempo y distancia de parada según velocidad, reacción y frenado. | Planteamiento disponible; simulador en desarrollo. |
+| Deterioro mecánico y mantenimiento | Proyección de un índice hipotético de deterioro de un rodamiento. | Simulador, tres escenarios y comparación de sistemas lineales. |
+| Oscilaciones por viento | Respuesta idealizada de una cabina ante fuerzas externas. | Planteamiento disponible; simulador en desarrollo. |
+| Reconstrucción de sensores | Estimación de datos faltantes en una señal conocida. | Planteamiento disponible; simulador en desarrollo. |
 
-La portada enlaza a una página independiente para cada uno de los cuatro módulos. El simulador disponible estudia el deterioro hipotético de un rodamiento. Los módulos de detención, viento y sensores están en desarrollo. El escenario normal usa mediciones a 0, 1 y 2 meses; estrés usa una evolución mayor; mal condicionado acerca las mediciones a 0, 0,02 y 0,04 meses. Los valores y el umbral son sintéticos.
+La portada enlaza a una página independiente para cada módulo. El informe describe las ecuaciones, supuestos, escenarios y resultados de esta etapa; las demás familias numéricas y la evidencia transversal de error para los cuatro casos siguen pendientes.
 
-## Modelo y calibración
+## Ejecutar el sitio
 
-D(t) = D₀ + αt + βt²; las lecturas observadas son y(t) = D(t) + s. D₀ es el índice inicial, α y β expresan su evolución, y s es un sesgo constante. **El sesgo requiere una calibración independiente**: sin ella D₀ y s no pueden identificarse por separado. Las tres lecturas y la calibración conforman Cx = y con cuatro incógnitas. Se comparan Jacobi, Gauss-Seidel, LU con pivoteo y gradiente conjugado sobre A = CᵀC, b = Cᵀy, con la solución directa de Cx = y como referencia. Las ecuaciones normales pueden amplificar el mal condicionamiento. Los iterativos tienen máximo de 1000 iteraciones y criterio de parada por norma del residuo. Se informa cuando no convergen. La página compara los parámetros estimados con la referencia, muestra las iteraciones finitas y compara los tres escenarios predeterminados. La condición es κ₂(A), estimada con una descomposición simétrica por rotaciones de Jacobi.
+Se requiere Python 3 para servir archivos localmente y una conexión a Internet para cargar las fuentes y, cuando se utiliza el historial, el cliente de Supabase.
 
-El cálculo del umbral admite crecimiento monótono con α ≥ 0 y β ≥ 0, o indica que no se calcula. Si el índice inicial ya supera el umbral, el tiempo es cero. El resultado es una proyección educativa, no una predicción de falla.
+```bash
+python -m http.server 8000
+```
 
-## Persistencia
+Abre [http://localhost:8000](http://localhost:8000). No abras `index.html` directamente como archivo local: los módulos JavaScript requieren un servidor HTTP.
 
-Supabase Auth gestiona registro e inicio de sesión. Las simulaciones se guardan en `public.simulaciones`, con entradas, resultados, versión y usuario. RLS permite a cada usuario consultar, insertar y eliminar únicamente sus propias filas. La clave pública del cliente no es una clave secreta; nunca usar `service_role` en el navegador. El registro puede requerir confirmación por correo según la configuración de Supabase. El historial abre y repite con el modelo actual; la versión guardada permite detectar cambios futuros, pero esta primera versión no reconstruye versiones anteriores del algoritmo.
+Para comprobar los cálculos con Node.js:
 
-`schema.sql` documenta la estructura aplicada. El DER inicialmente propuesto es una meta de evolución: esta primera versión guarda una instantánea JSON por simulación, no implementa aún todas sus entidades normalizadas ni las tablas de iteraciones. Tampoco sustituye las pruebas y el informe requeridos en la semana 1.
+```bash
+npm test
+```
 
-## Imagen
+El sitio está publicado desde la raíz de la rama `main` mediante GitHub Pages.
 
-[Línea Roja de Mi Teleférico en La Paz, Bolivia](https://commons.wikimedia.org/wiki/File:L%C3%ADnea_Roja_de_Mi_Telef%C3%A9rico_en_La_Paz,_Bolivia.jpg), EEJCC, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Se muestra sin modificar, con un degradado superpuesto mediante CSS.
+## Modelo de deterioro
+
+El índice se define como `D(t) = D₀ + αt + βt²` y la lectura observada como `y(t) = D(t) + s`. El sesgo constante `s` se obtiene mediante una **calibración independiente del sensor**: sin ella, `D₀` y `s` no pueden distinguirse. Tres lecturas y la calibración definen `Cx = y`; la solución directa de este sistema sirve de referencia. Para comparar métodos se construye `A = CᵀC` y `b = Cᵀy`.
+
+El simulador aplica Jacobi, Gauss-Seidel, LU con pivoteo y gradiente conjugado a `Ax = b`. Presenta las aproximaciones, iteraciones finitas, residuos, errores y condición de `A`. Los iterativos parten de cero, se detienen con `||b − Ax||₂ ≤ tolerancia` y tienen un límite de 1.000 iteraciones; también se interrumpen ante desbordamiento. Un residuo pequeño no garantiza error pequeño en una matriz mal condicionada. La formación de ecuaciones normales puede aumentar el condicionamiento.
+
+El escenario normal usa mediciones a 0, 1 y 2 meses; estrés usa los mismos tiempos con un deterioro sintético más rápido. El mal condicionado usa 0, 0,02 y 0,04 meses para estudiar sensibilidad matemática. La comparación entre escenarios que muestra la página utiliza sus valores predeterminados; la simulación principal utiliza las entradas actuales del usuario.
+
+El umbral de 60 puntos es un valor educativo. El cálculo de cruce admite crecimiento monótono con `α ≥ 0` y `β ≥ 0`; si el índice inicial ya alcanza el umbral, devuelve cero. La calibración no determina por sí sola una falla real.
+
+## Historial y datos
+
+Supabase Auth gestiona el registro y el inicio de sesión. La tabla `public.simulaciones` conserva por usuario las entradas, resultados, escenario, versión y fecha. Las políticas RLS restringen las filas al propietario autenticado; la clave de cliente incorporada en el código es pública y no otorga privilegios de servicio. La confirmación del correo depende de la configuración del proyecto Supabase.
+
+El [DER conceptual](figuras/der-propuesto.png) describe el diseño propuesto con casos, escenarios, simulaciones, métodos, iteraciones y resultados. El esquema actualmente aplicado, documentado en [schema.sql](schema.sql), guarda una instantánea JSON por simulación y **no implementa aún todas esas entidades como tablas separadas**. El historial repite las entradas con la versión actual del modelo; todavía falta comprobar con una cuenta real el flujo completo de guardar, cerrar, recuperar y repetir.
+
+## Archivos principales
+
+| Archivo | Función |
+|---|---|
+| `index.html` | Portada y acceso a los cuatro casos. |
+| `deterioro.html`, `detencion.html`, `viento.html`, `sensores.html` | Páginas de los módulos. |
+| `app.js` | Interfaz del simulador e integración de historial. |
+| `math.js` | Modelo de calibración y métodos numéricos. |
+| `math.test.js` | Pruebas de referencia, sensibilidad, validación e iteraciones. |
+| `style.css` | Diseño adaptable y tokens para temas claro y oscuro. |
+| `schema.sql` | Esquema y políticas de acceso de Supabase. |
+| `informe.md` y `figuras/` | Informe científico de avance, DER y gráficos de resultados. |
+
+## Fotografía de portada
+
+[Línea Roja de Mi Teleférico en La Paz, Bolivia](https://commons.wikimedia.org/wiki/File:L%C3%ADnea_Roja_de_Mi_Telef%C3%A9rico_en_La_Paz,_Bolivia.jpg), EEJCC, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). La imagen se presenta con un degradado superpuesto mediante CSS.
