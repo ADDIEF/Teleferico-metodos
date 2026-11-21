@@ -578,8 +578,8 @@ export function simulateSensores({
     }
   }
 
-  // Valores conocidos con posible ruido de medición
-  const valores = nodos.map((x) => fRef(x) + (Math.random() * 2 - 1) * ruido);
+  // Valores conocidos con posible ruido de medición (determinista)
+  const valores = nodos.map((x, i) => fRef(x) + (Math.sin(i * 7.3 + 1.1) * 2 - 1) * ruido);
 
   // Puntos de evaluación más densos que los nodos
   const nEval = 60;
@@ -588,10 +588,13 @@ export function simulateSensores({
     puntosEval.push(a + (b - a) * i / nEval);
   }
 
-  // Seleccionar puntos ocultados (para medir error real de predicción)
+  // Seleccionar puntos ocultados (determinista, reproducible)
+  // Se ocultan puntos equiespaciados para que el escenario sea reproducible
   const indicesOcultos = new Set();
-  while (indicesOcultos.size < Math.min(puntosOcultar, nEval + 1)) {
-    indicesOcultos.add(Math.floor(Math.random() * (nEval + 1)));
+  const step = Math.max(1, Math.floor((nEval + 1) / (puntosOcultar + 1)));
+  for (let i = 1; i <= puntosOcultar; i++) {
+    const idx = Math.min(i * step, nEval);
+    indicesOcultos.add(idx);
   }
 
   // Funciones interpoladoras
