@@ -18,8 +18,9 @@
     <header><a class="brand" href="index.html#inicio"><span class="brandmark">S<span>·</span></span> SIMTELE <small>/
                 RISK</small></a>
         <nav aria-label="Módulos"><a href="detencion.html">Detención</a><a href="deterioro.html">Deterioro</a><a
-                href="viento.html">Viento</a><a href="sensores.html">Sensores</a></nav><a class="navcta"
-            href="sensores.html#simulador">Abrir simulador <span>↗</span></a>
+                href="viento.html">Viento</a><a href="sensores.html">Sensores</a></nav>
+        <div class="nav-auth"><button id="nav-signin">Ingresar</button><button id="nav-signup">Crear cuenta</button><button id="nav-signout" style="display:none">Salir</button></div>
+        <a class="navcta" href="sensores.html#simulador">Abrir simulador <span>↗</span></a>
     </header>
     <main>
         <div class="shell">
@@ -133,6 +134,12 @@
                     </div>
                 </div>
                 <div class="panel results">
+                    <div class="paneltitle"><span>GUARDAR Y CONSULTAR</span><span>HISTORIAL PERSONAL</span></div>
+                    <div class="actions"><button id="save" class="button dark">Guardar simulación <span>↗</span></button><button id="history" class="button dark">Ver historial <span>↗</span></button></div>
+                    <p id="account-message" role="status" class="hint"></p>
+                    <ul id="history-list"></ul>
+                </div>
+                <div class="panel results">
                     <div class="paneltitle"><span>03 / COMPARACIÓN NUMÉRICA</span><span>ERROR DE PREDICCIÓN EN PUNTOS OCULTADOS</span></div>
                     <div class="table-wrap">
                         <table>
@@ -213,6 +220,22 @@
                     <div id="conclusion-sen"></div>
                 </div>
             </section>
+            <div class="panel account" id="cuenta">
+                <div>
+                    <div class="eyebrow">HISTORIAL PERSONAL</div>
+                    <h3>Guarda tus experimentos.</h3>
+                    <p>Inicia sesión para recuperar tus parámetros y repetir una simulación.</p>
+                </div>
+                <div>
+                    <div class="fields"><label>Correo <input id="email" type="email"
+                                autocomplete="email"></label><label>Contraseña <input id="password" type="password"
+                                autocomplete="current-password"></label></div>
+                    <div class="actions"><button id="signin">Entrar</button><button id="signup">Crear
+                            cuenta</button><button id="signout">Salir</button></div>
+                    <p id="account-message" role="status" class="hint"></p>
+                    
+                </div>
+            </div>
             <section id="interpretacion" class="section split conclusion">
                 <div>
                     <div class="eyebrow">UNA LECTURA RESPONSABLE <span>/ 04</span></div>

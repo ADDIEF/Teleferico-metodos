@@ -1,10 +1,5 @@
 import { simulate } from './math.js';
-let dbPromise;
-
-function database() {
-  return dbPromise ||= import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.89.0/+esm').then(({ createClient }) => createClient('https://ucgkylgsvcymepplvias.supabase.co', 'sb_publishable_-j_8z-D6DpdNgsVxvqOZug_Ob2eUvtx')).catch(() => { dbPromise = null; throw Error('No se pudo conectar con el servicio de historial. Comprueba tu conexión.') })
-}
-
+import { database } from './db.js';
 const $ = id => document.getElementById(id), ids = ['y0', 'y1', 'y2', 'bias', 'threshold', 'tolerance']; let last = null; const fmt = n => Number.isFinite(n) ? (Math.abs(n) > 1e5 || Math.abs(n) < .001 && n !== 0 ? n.toExponential(2) : n.toFixed(3)) : '—';
 
 const presets = {
@@ -86,6 +81,20 @@ un crecimiento mayor puede adelantar la inspección. Es una proyección hipotét
 
 $('scenario').addEventListener('change', () => { let p = presets[$('scenario').value]; ids.forEach((id, i) => $(id).value = p.values[i]); $('scenario-desc').textContent = p.desc; run() }); $('run').addEventListener('click', () => { if (run()) { $('output').focus({ preventScroll: true }); $('output').scrollIntoView({ behavior: 'smooth', block: 'start' }) } }); $('scenario').dispatchEvent(new Event('change'));
 
+// ---------- Sincronización navbar ↔ panel de cuenta ----------
+// No hay inputs en el navbar, solo botones que hacen scroll
+$('nav-signin').onclick = () => { document.getElementById('cuenta').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+$('nav-signup').onclick = () => { document.getElementById('cuenta').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+$('nav-signout').onclick = async () => { try { let db = await database(); let { error } = await db.auth.signOut(); msg(error ? error.message : 'Sesión cerrada.'); clearHistory(); $('nav-signout').style.display = 'none'; $('nav-signin').style.display = ''; $('nav-signup').style.display = ''; } catch (e) { msg(e.message) } };
+// Botones del panel HISTORIAL PERSONAL (igual que en detencion-app.js)
+$('signin').onclick = () => auth(false).catch(e => msg(e.message));
+$('signup').onclick = () => auth(true).catch(e => msg(e.message));
+$('signout').onclick = async () => { try { let db = await database(); let { error } = await db.auth.signOut(); msg(error ? error.message : 'Sesión cerrada.'); clearHistory(); updateNavAuth(); } catch (e) { msg(e.message) } };
+function clearHistory() { ['history-list', 'account-history-list'].forEach(id => { const el = $(id); if (el) el.replaceChildren(); }); }
+// Actualizar visibilidad de botones según sesión
+async function updateNavAuth() { let u = await user(); if (u) { $('nav-signout').style.display = ''; $('nav-signin').style.display = 'none'; $('nav-signup').style.display = 'none'; } else { $('nav-signout').style.display = 'none'; $('nav-signin').style.display = ''; $('nav-signup').style.display = ''; } }
+updateNavAuth();
+
 function renderSensitivityDet() {
   try {
     const v = inputs();
@@ -110,4 +119,6 @@ function renderSensitivityDet() {
   }
 }
 
-const msg = t => $('account-message').textContent = t; async function user() { let db = await database(); let { data, error } = await db.auth.getUser(); if (error) return null; return data.user } async function auth(signup) { let email = $('email').value, password = $('password').value; if (!email || !password) { msg('Escribe tu correo y contraseña.'); return } let db = await database(); let { data, error } = signup ? await db.auth.signUp({ email, password }) : await db.auth.signInWithPassword({ email, password }); msg(error ? error.message : signup && !data.session ? 'Revisa tu correo para confirmar la cuenta antes de entrar.' : 'Sesión iniciada.'); $('password').value = '' } $('signin').onclick = () => auth(false).catch(e => msg(e.message)); $('signup').onclick = () => auth(true).catch(e => msg(e.message)); $('signout').onclick = async () => { try { let db = await database(); let { error } = await db.auth.signOut(); msg(error ? error.message : 'Sesión cerrada.'); $('history-list').replaceChildren() } catch (e) { msg(e.message) } }; $('save').onclick = async () => { try { run(); if (!last) return; let u = await user(); if (!u) { msg('Inicia sesión para guardar.'); return } let db = await database(); let { error } = await db.from('simulaciones').insert({ user_id: u.id, caso: 'deterioro', escenario: last.entradas.scenario, entradas: last.entradas, resultados: last.resultados }); msg(error ? error.message : 'Simulación guardada.') } catch (e) { msg(e.message) } }; $('history').onclick = async () => { try { if (!await user()) { msg('Inicia sesión para consultar el historial.'); return } let db = await database(); let { data, error } = await db.from('simulaciones').select('id,escenario,entradas,creado_en').order('creado_en', { ascending: false }).limit(30); if (error) { msg(error.message); return } let list = $('history-list'); list.replaceChildren(); data.forEach(row => { let li = document.createElement('li'), button = document.createElement('button'); button.textContent = `${new Date(row.creado_en).toLocaleString('es-BO')} · ${row.escenario} · Abrir y repetir`; button.onclick = () => { $('scenario').value = row.entradas.scenario; $('scenario-desc').textContent = presets[row.entradas.scenario].desc; ids.forEach(id => $(id).value = row.entradas[id]); run(); msg('Simulación recuperada y repetida con el modelo actual.') }; li.append(button); list.append(li) }); msg(data.length ? `${data.length} simulaciones encontradas.` : 'Aún no hay simulaciones guardadas.') } catch (e) { msg(e.message) } };
+const msg = t => document.querySelectorAll('[data-msg]').forEach(el => el.textContent = t); async function user() { let db = await database(); let { data, error } = await db.auth.getUser(); if (error) return null; return data.user } async function auth(signup) { let email = $('email').value, password = $('password').value; if (!email || !password) { msg('Escribe tu correo y contraseña.'); return } let db = await database(); let { data, error } = signup ? await db.auth.signUp({ email, password }) : await db.auth.signInWithPassword({ email, password }); msg(error ? error.message : signup && !data.session ? 'Revisa tu correo para confirmar la cuenta antes de entrar.' : 'Sesión iniciada.'); $('password').value = ''; updateNavAuth(); }
+// Guardar e historial
+$('save').onclick = async () => { try { run(); if (!last) return; let u = await user(); if (!u) { msg('Inicia sesión para guardar.'); return } let db = await database(); let { error } = await db.from('simulaciones').insert({ user_id: u.id, caso: 'deterioro', escenario: last.entradas.scenario, entradas: last.entradas, resultados: last.resultados }); msg(error ? error.message : 'Simulación guardada.') } catch (e) { msg(e.message) } }; $('history').onclick = async () => { try { if (!await user()) { msg('Inicia sesión para consultar el historial.'); return } let db = await database(); let { data, error } = await db.from('simulaciones').select('id,escenario,entradas,creado_en').order('creado_en', { ascending: false }).limit(30); if (error) { msg(error.message); return } let list = $('history-list'), list2 = $('account-history-list'); list.replaceChildren(); if (list2) list2.replaceChildren(); data.forEach(row => { let li = document.createElement('li'), button = document.createElement('button'); button.textContent = `${new Date(row.creado_en).toLocaleString('es-BO')} · ${row.escenario} · Abrir y repetir`; button.onclick = () => { $('scenario').value = row.entradas.scenario; $('scenario-desc').textContent = presets[row.entradas.scenario].desc; ids.forEach(id => $(id).value = row.entradas[id]); run(); msg('Simulación recuperada y repetida con el modelo actual.') }; li.append(button); list.append(li); if (list2) { let li2 = li.cloneNode(true); li2.querySelector('button').onclick = button.onclick; list2.append(li2) } }); msg(data.length ? `${data.length} simulaciones encontradas.` : 'Aún no hay simulaciones guardadas.') } catch (e) { msg(e.message) } };

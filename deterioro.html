@@ -18,8 +18,9 @@
     <header><a class="brand" href="index.html#inicio"><span class="brandmark">S<span>·</span></span> SIMTELE <small>/
                 RISK</small></a>
         <nav aria-label="Módulos"><a href="detencion.html">Detención</a><a href="deterioro.html">Deterioro</a><a
-                href="viento.html">Viento</a><a href="sensores.html">Sensores</a></nav><a class="navcta"
-            href="deterioro.html#simulador">Abrir simulador <span>↗</span></a>
+                href="viento.html">Viento</a><a href="sensores.html">Sensores</a></nav>
+        <div class="nav-auth"><button id="nav-signin">Ingresar</button><button id="nav-signup">Crear cuenta</button><button id="nav-signout" style="display:none">Salir</button></div>
+        <a class="navcta" href="deterioro.html#simulador">Abrir simulador <span>↗</span></a>
     </header>
     <main>
         <div class="shell">
@@ -159,6 +160,13 @@
                     </div>
                 </div>
                 <div class="panel results">
+                    <div class="paneltitle"><span>GUARDAR Y CONSULTAR</span><span>HISTORIAL PERSONAL</span></div>
+                    <div class="actions"><button id="save" class="button dark">Guardar simulación <span>↗</span></button>
+                        <button id="history" class="button dark">Ver historial <span>↗</span></button></div>
+                    <p id="save-message" data-msg role="status" class="hint"></p>
+                    <ul id="history-list"></ul>
+                </div>
+                <div class="panel results">
                     <div class="paneltitle"><span>03 / COMPARACIÓN NUMÉRICA</span><span>REFERENCIA: SOLUCIÓN DIRECTA DE
                             LAS OBSERVACIONES</span></div>
                     <div class="table-wrap">
@@ -248,7 +256,7 @@
                     </div>
                     <p class="hint">Se perturba la última lectura en +0,0001 puntos y se mide el cambio en el coeficiente cuadrático β. El factor de amplificación compara mal condicionado vs normal.</p>
                 </div>
-                <div class="panel account">
+                <div class="panel account" id="cuenta">
                     <div>
                         <div class="eyebrow">HISTORIAL PERSONAL</div>
                         <h3>Guarda tus experimentos.</h3>
@@ -259,10 +267,9 @@
                                     autocomplete="email"></label><label>Contraseña <input id="password" type="password"
                                     autocomplete="current-password"></label></div>
                         <div class="actions"><button id="signin">Entrar</button><button id="signup">Crear
-                                cuenta</button><button id="signout">Salir</button><button id="save">Guardar
-                                simulación</button><button id="history">Ver historial</button></div>
-                        <p id="account-message" role="status" class="hint"></p>
-                        <ul id="history-list"></ul>
+                                cuenta</button><button id="signout">Salir</button></div>
+                        <p id="account-message" data-msg role="status" class="hint"></p>
+                        <ul id="account-history-list"></ul>
                     </div>
                 </div>
             </section>
